@@ -1,3 +1,6 @@
+from comet_ml import Experiment
+experiment = Experiment(auto_metric_logging=False)
+
 import matplotlib
 
 matplotlib.use('Agg')
@@ -34,10 +37,20 @@ if __name__ == "__main__":
                         help="Names of the devices comma separated.")
     parser.add_argument("--verbose", dest="verbose", action="store_true", help="Print model architecture")
     parser.set_defaults(verbose=False)
-
+    
     opt = parser.parse_args()
+    experiment.log_others(vars(opt))
+    experiment.log_code("./train.py")
+    experiment.log_code("./reconstruction.py")
+    experiment.log_code("./animate.py")
+    experiment.log_code("./modules/model.py")
+    experiment.log_code("./modules/generator.py")
+    experiment.log_code("./modules/keypoint_detector.py")
+    experiment.log_code("./modules/discriminator.py")
+    
     with open(opt.config) as f:
         config = yaml.load(f)
+        experiment.log_asset(opt.config, 'config.yaml')
 
     if opt.checkpoint is not None:
         log_dir = os.path.join(*os.path.split(opt.checkpoint)[:-1])
@@ -78,7 +91,7 @@ if __name__ == "__main__":
 
     if opt.mode == 'train':
         print("Training...")
-        train(config, generator, discriminator, kp_detector, opt.checkpoint, log_dir, dataset, opt.device_ids)
+        train(config, generator, discriminator, kp_detector, opt.checkpoint, log_dir, dataset, opt.device_ids, experiment)
     elif opt.mode == 'reconstruction':
         print("Reconstruction...")
         reconstruction(config, generator, kp_detector, opt.checkpoint, log_dir, dataset)
