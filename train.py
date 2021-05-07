@@ -13,7 +13,7 @@ from sync_batchnorm import DataParallelWithCallback
 from frames_dataset import DatasetRepeater
 
 
-def train(config, generator, discriminator, kp_detector, checkpoint, log_dir, dataset, device_ids, experiment):
+def train(config, generator, discriminator, kp_detector, checkpoint, log_dir, dataset, device_ids, comet_logger):
     train_params = config['train_params']
 
     optimizer_generator = torch.optim.Adam(generator.parameters(), lr=train_params['lr_generator'], betas=(0.5, 0.999))
@@ -46,7 +46,7 @@ def train(config, generator, discriminator, kp_detector, checkpoint, log_dir, da
         discriminator_full = DataParallelWithCallback(discriminator_full, device_ids=device_ids)
 
     with Logger(log_dir=log_dir, visualizer_params=config['visualizer_params'], checkpoint_freq=train_params['checkpoint_freq'],
-                experiment=experiment) as logger:
+                comet_logger=comet_logger) as logger:
         for epoch in trange(start_epoch, train_params['num_epochs']):
             for i, x in enumerate(dataloader):
                 losses_generator, generated = generator_full(x)

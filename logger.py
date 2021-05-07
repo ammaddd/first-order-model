@@ -12,7 +12,7 @@ import collections
 
 class Logger:
     def __init__(self, log_dir, checkpoint_freq=100, visualizer_params=None, zfill_num=8, log_file_name='log.txt',
-                 experiment=None):
+                 comet_logger=None):
 
         self.loss_list = []
         self.cpk_dir = log_dir
@@ -26,7 +26,7 @@ class Logger:
         self.epoch = 0
         self.best_loss = float('inf')
         self.names = None
-        self._experiment = experiment
+        self._comet_logger = comet_logger
 
     def log_scores(self, loss_names):
         loss_mean = np.array(self.loss_list).mean(axis=0)
@@ -40,7 +40,7 @@ class Logger:
 
     def visualize_rec(self, inp, out):
         image = self.visualizer.visualize(inp['driving'], inp['source'], out)
-        self._experiment.log_image(image, name='rec')
+        self._comet_logger.log_image(image, name='rec')
         imageio.imsave(os.path.join(self.visualizations_dir, "%s-rec.png" % str(self.epoch).zfill(self.zfill_num)), image)
 
     def save_cpk(self, emergent=False):
@@ -49,7 +49,7 @@ class Logger:
         cpk_path = os.path.join(self.cpk_dir, '%s-checkpoint.pth.tar' % str(self.epoch).zfill(self.zfill_num)) 
         if not (os.path.exists(cpk_path) and emergent):
             torch.save(cpk, cpk_path)
-            self._experiment.log_model('model', cpk_path)
+            self._comet_logger.log_model('model', cpk_path)
 
     @staticmethod
     def load_cpk(checkpoint_path, generator=None, discriminator=None, kp_detector=None,
@@ -86,8 +86,8 @@ class Logger:
 
     def log_iter(self, losses, step=None):
         losses = collections.OrderedDict(losses.items())
-        self._experiment.log_metrics(losses, step=(step+1)*(self.epoch+1),
-                                     epoch=self.epoch)
+        self._comet_logger.log_metrics(losses, step=(step+1)*(self.epoch+1),
+                                       epoch=self.epoch)
         if self.names is None:
             self.names = list(losses.keys())
         self.loss_list.append(list(losses.values()))
