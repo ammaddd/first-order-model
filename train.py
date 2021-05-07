@@ -47,8 +47,10 @@ def train(config, generator, discriminator, kp_detector, checkpoint, log_dir, da
 
     with Logger(log_dir=log_dir, visualizer_params=config['visualizer_params'], checkpoint_freq=train_params['checkpoint_freq'],
                 comet_logger=comet_logger) as logger:
+        global_step = 0
         for epoch in trange(start_epoch, train_params['num_epochs']):
             for i, x in enumerate(dataloader):
+                global_step += 1
                 losses_generator, generated = generator_full(x)
 
                 loss_values = [val.mean() for val in losses_generator.values()]
@@ -74,7 +76,7 @@ def train(config, generator, discriminator, kp_detector, checkpoint, log_dir, da
 
                 losses_generator.update(losses_discriminator)
                 losses = {key: value.mean().detach().data.cpu().numpy() for key, value in losses_generator.items()}
-                logger.log_iter(losses=losses, step=i)
+                logger.log_iter(losses=losses, step=global_step)
 
             scheduler_generator.step()
             scheduler_discriminator.step()

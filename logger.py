@@ -86,8 +86,7 @@ class Logger:
 
     def log_iter(self, losses, step=None):
         losses = collections.OrderedDict(losses.items())
-        self._comet_logger.log_metrics(losses, step=(step+1)*(self.epoch+1),
-                                       epoch=self.epoch)
+        self._comet_logger.log_metrics(losses, step=step, epoch=self.epoch)
         if self.names is None:
             self.names = list(losses.keys())
         self.loss_list.append(list(losses.values()))
