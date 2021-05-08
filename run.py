@@ -1,3 +1,4 @@
+from comet_utils import CometLogger
 import matplotlib
 
 matplotlib.use('Agg')
@@ -33,11 +34,24 @@ if __name__ == "__main__":
     parser.add_argument("--device_ids", default="0", type=lambda x: list(map(int, x.split(','))),
                         help="Names of the devices comma separated.")
     parser.add_argument("--verbose", dest="verbose", action="store_true", help="Print model architecture")
+    parser.add_argument('--comet', type=bool, default=False, help='comet logging')
     parser.set_defaults(verbose=False)
-
+    
     opt = parser.parse_args()
+
+    comet_logger = CometLogger(opt.comet, auto_metric_logging=False)
+    comet_logger.log_others(vars(opt))
+    comet_logger.log_code("./train.py")
+    comet_logger.log_code("./reconstruction.py")
+    comet_logger.log_code("./animate.py")
+    comet_logger.log_code("./modules/model.py")
+    comet_logger.log_code("./modules/generator.py")
+    comet_logger.log_code("./modules/keypoint_detector.py")
+    comet_logger.log_code("./modules/discriminator.py")
+    
     with open(opt.config) as f:
         config = yaml.load(f)
+        comet_logger.log_asset(opt.config, 'config.yaml')
 
     if opt.checkpoint is not None:
         log_dir = os.path.join(*os.path.split(opt.checkpoint)[:-1])
@@ -78,7 +92,7 @@ if __name__ == "__main__":
 
     if opt.mode == 'train':
         print("Training...")
-        train(config, generator, discriminator, kp_detector, opt.checkpoint, log_dir, dataset, opt.device_ids)
+        train(config, generator, discriminator, kp_detector, opt.checkpoint, log_dir, dataset, opt.device_ids, comet_logger)
     elif opt.mode == 'reconstruction':
         print("Reconstruction...")
         reconstruction(config, generator, kp_detector, opt.checkpoint, log_dir, dataset)
